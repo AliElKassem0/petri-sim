@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Petri-Sim · Petri-Netz-Labor</title>
+    <meta name="description" content="Fire Petri nets and watch the firing rule worked out with real numbers." />
+    <link rel="icon" type="image/svg+xml" href="/petri.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <script>
+      // Use the saved light/dark choice before the page is drawn, so it doesn't flash
+      try {
+        const saved = localStorage.getItem('petri-sim-theme');
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+      } catch (e) {
+        // storage blocked: just follow the system setting
+      }
+    </script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#1" aria-label="Petri-Sim, back to the first net">
+          <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="8" class="logo-bg" />
+            <circle cx="11" cy="16" r="6.5" class="logo-ring" />
+            <circle cx="11" cy="16" r="2.4" class="logo-dot" />
+            <path d="M17.5 16h3.5" class="logo-line" />
+            <rect x="22" y="8.5" width="3.5" height="15" rx="1" class="logo-bar" />
+          </svg>
+          <span class="brand-name">Petri-Sim</span>
+        </a>
+
+        <div class="picker">
+          <label for="net-select" class="picker-label">Net</label>
+          <button type="button" class="icon-btn" id="prev-net" aria-label="Previous net" title="Previous net ( [ )">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
+          <div class="select-wrap">
+            <select id="net-select"></select>
+          </div>
+          <button type="button" class="icon-btn" id="next-net" aria-label="Next net" title="Next net ( ] )">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </div>
+
+        <button type="button" class="icon-btn theme-btn" id="theme-toggle" aria-label="Switch light / dark theme" title="Switch light / dark theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- The net, its toolbar -->
+      <section class="card stage-card" aria-labelledby="net-title">
+        <div class="stage-head">
+          <div class="stage-title">
+            <p class="eyebrow" id="net-eyebrow">Net 1 of 11</p>
+            <h1 id="net-title">Petri-Sim</h1>
+          </div>
+          <dl class="stats">
+            <div class="stat">
+              <dt>Step</dt>
+              <dd id="stat-step">0</dd>
+            </div>
+            <div class="stat">
+              <dt>Tokens</dt>
+              <dd><span id="stat-tokens">0</span><span class="delta" id="stat-delta" hidden></span></dd>
+            </div>
+            <div class="stat">
+              <dt>Enabled</dt>
+              <dd id="stat-enabled">0</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="stage">
+          <svg id="net-svg" role="group" viewBox="0 0 680 300"></svg>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" class="btn" id="step-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l10 7-10 7z" class="fill" /><path d="M19 5v14" /></svg>
+            <span>Random step</span><kbd>N</kbd>
+          </button>
+          <button type="button" class="btn" id="play-btn" aria-pressed="false">
+            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5l12 7.5-12 7.5z" class="fill" /></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+            <span id="play-label">Auto-play</span><kbd>P</kbd>
+          </button>
+          <button type="button" class="btn" id="back-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+            <span>Back</span><kbd>B</kbd>
+          </button>
+          <button type="button" class="btn" id="reset-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5" /><path d="M3.5 3.5v5h5" /></svg>
+            <span>Reset</span><kbd>R</kbd>
+          </button>
+
+          <span class="spacer"></span>
+
+          <div class="speed" role="radiogroup" aria-label="Speed">
+            <span class="speed-label" aria-hidden="true">Speed</span>
+            <div class="segmented">
+              <label><input type="radio" name="speed" value="0.5" /><span>Slow 0.5×</span></label>
+              <label><input type="radio" name="speed" value="1" checked /><span>Normal 1×</span></label>
+              <label><input type="radio" name="speed" value="2" /><span>Fast 2×</span></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Can t fire? The rules worked out with real numbers -->
+      <section class="card check-card" aria-labelledby="check-heading">
+        <h2 class="panel-title" id="check-heading"><span class="pulse-dot" aria-hidden="true"></span>Firing check</h2>
+        <div id="check" class="check" aria-live="polite"></div>
+      </section>
+
+      <!-- Marking, enabled, next step, sequence -->
+      <section class="card readout-card" aria-labelledby="readout-heading">
+        <h2 class="panel-title" id="readout-heading">State</h2>
+        <dl class="readout">
+          <dt>Marking</dt>
+          <dd id="r-marking"></dd>
+          <dt>Enabled</dt>
+          <dd id="r-enabled"></dd>
+          <dt>Next step</dt>
+          <dd id="r-next"></dd>
+          <dt>Sequence</dt>
+          <dd id="r-sequence"></dd>
+        </dl>
+      </section>
+
+      <!-- The firing rule -->
+      <section class="card rules-card" aria-labelledby="rules-heading">
+        <h2 class="panel-title" id="rules-heading">Firing rule</h2>
+        <ol class="formula">
+          <li>
+            <span class="formula-name">Rule 1</span>
+            <code>M(e) ≥ W(e, t)</code>
+            <span class="formula-text">for every input place e</span>
+          </li>
+          <li>
+            <span class="formula-name">Rule 2</span>
+            <code>M(a) − W(a, t) + W(t, a) ≤ K(a)</code>
+            <span class="formula-text">for every output place a, counted after firing</span>
+          </li>
+          <li>
+            <span class="formula-name">Firing</span>
+            <code>M′(p) = M(p) − W(p, t) + W(t, p)</code>
+            <span class="formula-text">for every place p</span>
+          </li>
+        </ol>
+        <p class="note">No K written means K = ∞. No number on an arrow means weight 1.</p>
+      </section>
+
+      <!-- What the symbols mean -->
+      <section class="card legend-card" aria-labelledby="legend-heading">
+        <h2 class="panel-title" id="legend-heading">Notation</h2>
+        <ul class="legend">
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><circle class="pn-place" cx="24" cy="18" r="13" /></svg>
+            <span><b>Stelle</b>place: a state</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><circle class="pn-place" cx="24" cy="18" r="13" /><circle class="pn-token" cx="19" cy="18" r="3.5" /><circle class="pn-token" cx="29" cy="18" r="3.5" /></svg>
+            <span><b>Marken</b>2 tokens in a place</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><circle class="pn-place" cx="18" cy="20" r="12" /><text class="pn-cap" x="31" y="10">K=2</text></svg>
+            <span><b>Kapazität</b>at most 2 tokens</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><rect class="pn-tr on" x="20" y="4" width="8" height="28" rx="1.5" /></svg>
+            <span><b>Transition</b>green: can fire</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><rect class="pn-tr off" x="20" y="4" width="8" height="28" rx="1.5" /></svg>
+            <span><b>Transition</b>gray: cannot fire</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><line class="pn-arc" x1="4" y1="24" x2="40" y2="24" /><path class="pn-head" d="M35 20L41 24L35 28" /><text class="pn-weight" x="20" y="13" text-anchor="middle">2</text></svg>
+            <span><b>Pfeil</b>arrow, weight 2</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 48 36" aria-hidden="true"><line class="pn-arc active" x1="4" y1="18" x2="44" y2="18" /><circle class="pn-move" cx="24" cy="18" r="5" /></svg>
+            <span><b>Unterwegs</b>token on its way</span>
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p class="shortcuts">
+        <span><kbd>N</kbd> random step</span>
+        <span><kbd>P</kbd> auto-play</span>
+        <span><kbd>B</kbd> back</span>
+        <span><kbd>R</kbd> reset</span>
+        <span><kbd>[</kbd> <kbd>]</kbd> previous / next net</span>
+        <span><kbd>Tab</kbd> + <kbd>Enter</kbd> fire a transition</span>
+      </p>
+      <p>Study aid for “Parallele und Funktionale Programmierung”, FAU Erlangen-Nürnberg. Not official course material.</p>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
